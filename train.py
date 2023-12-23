@@ -99,7 +99,7 @@ trainer = Trainer(
         LogModelHyperParams(),
     ],
     profiler="simple",  # use to check what is working slow
-    default_root_dir=os.environ["WORK_PATH"],
+    # default_root_dir=os.environ["WORK_PATH"],
 )
 
 trainer.fit(lightning_module, data_module)
