@@ -13,21 +13,40 @@ from lightning.pytorch.callbacks import (
     ModelCheckpoint,
 )
 from lightning.pytorch import Trainer, seed_everything
-from models.edsr import EDSR, LogModelHyperParams
 import torch.nn as nn
 import torch
+
+# from models.edsr import EDSR, LogModelHyperParams
+from models.swinir import SwinIR, LogModelHyperParams
 
 load_dotenv()
 
 torch.set_float32_matmul_precision("medium")
 seed_everything(42, workers=True)
 
-model = EDSR(
-    n_resblocks=64,
-    n_feats=128,
-    scale=4,
-    kernel_size=3,
-)
+# model = EDSR(
+#     n_resblocks=64,
+#     n_feats=128,
+#     scale=4,
+#     kernel_size=3,
+# )
+
+    # window_size = 8
+    # height = (1024 // upscale // window_size + 1) * window_size
+    # width = (720 // upscale // window_size + 1) * window_size
+
+model = SwinIR(
+    upscale=4, 
+    img_size=(128, 128),
+    window_size=8, 
+    img_range=1.,
+    in_chans=4, 
+    depths=[6, 6, 6, 6],
+    embed_dim=60, 
+    num_heads=[6, 6, 6, 6], 
+    mlp_ratio=2, 
+    upsampler='pixelshuffledirect',
+    )
 
 lightning_module = GeoSR(
     model=model,
@@ -61,44 +80,44 @@ trainer = Trainer(
     # accelerator = "cpu",
     deterministic=True,  # turn off/on random seed
     precision=32,
-    accumulate_grad_batches=32,
+    accumulate_grad_batches=1,
     log_every_n_steps=50,
-    val_check_interval=5000,
-    max_epochs=100,
+    val_check_interval=400,
+    max_epochs=3,
     # limit_train_batches = 11,
     limit_val_batches=5,
     logger=WandbLogger(
         project="GeoSR",
-        log_model="all",  # "all", True or False
-        offline=False,
+        log_model=False,  # "all", True or False
+        offline=True,
         # save_dir=os.environ["WORK_PATH"] + "logs/" # where to write wandb logs (not that important)
         save_dir="logs/",
     ),
     callbacks=[
-        LogResults(
-            lr_path=os.environ["MAIN_DATA_PATH"] + os.environ["EVAL_DATA_SUB_PATH_LR"],
-            hr_path=os.environ["MAIN_DATA_PATH"] + os.environ["EVAL_DATA_SUB_PATH_HR"],
-            lr_names=[
-                "T43QEC_20220404_RGBN_10m_14_1.tif",
-                "T35TMJ_20210823_RGBN_10m_13_2.tif",
-            ],
-            hr_names=[
-                "T43QEC_20220404_RGBN_PS_2_5m_14_1.tif",
-                "T35TMJ_20210823_RGBN_PS_2_5m_13_2.tif",
-            ],
-            log_to_wandb=True,
-            log_to_disk=True,
-            save_dir="logs/tif/",
-            log_every_n_epochs=1,
-        ),
-        ModelCheckpoint(monitor="val_scc", mode="max"),
-        EarlyStopping(monitor="val_scc", min_delta=0.0001, patience=3, mode="max"),
+        # LogResults(
+        #     lr_path=os.environ["MAIN_DATA_PATH"] + os.environ["EVAL_DATA_SUB_PATH_LR"],
+        #     hr_path=os.environ["MAIN_DATA_PATH"] + os.environ["EVAL_DATA_SUB_PATH_HR"],
+        #     lr_names=[
+        #         "T43QEC_20220404_RGBN_10m_14_1.tif",
+        #         "T35TMJ_20210823_RGBN_10m_13_2.tif",
+        #     ],
+        #     hr_names=[
+        #         "T43QEC_20220404_RGBN_PS_2_5m_14_1.tif",
+        #         "T35TMJ_20210823_RGBN_PS_2_5m_13_2.tif",
+        #     ],
+        #     log_to_wandb=True,
+        #     log_to_disk=True,
+        #     save_dir="logs/tif/",
+        #     log_every_n_epochs=1,
+        # ),
+        # ModelCheckpoint(monitor="val_scc", mode="max"),
+        # EarlyStopping(monitor="val_scc", min_delta=0.0001, patience=3, mode="max"),
         # LearningRateFinder(min_lr=1e-7, max_lr=1e-4, num_training_steps=100),
         LearningRateMonitor(),
         # RichModelSummary(),
-        LogModelHyperParams(),
+        # LogModelHyperParams(),
     ],
-    profiler="simple",  # use to check what is working slow
+    # profiler="simple",  # use to check what is working slow
     # default_root_dir=os.environ["WORK_PATH"],
 )
 
