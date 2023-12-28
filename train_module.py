@@ -52,9 +52,17 @@ class GeoSR(lightning.LightningModule):
         self.scheduler_MultiStepLR_multiplier = scheduler_MultiStepLR_multiplier
 
     def forward(self, imgs):
+        singleImg = False
+        if len(imgs.shape) == 3: # is it a single picture, or a batch
+            singleImg = True 
+            imgs = imgs.view(1,*imgs.shape)
+
         imgs = self.process(imgs)
         imgs = self.model(imgs)
-        return self.inv_process(imgs)
+        imgs = self.inv_process(imgs)
+        if singleImg:
+            imgs = imgs[0,...]
+        return imgs
 
     def configure_optimizers(self):
         # AdamW is Adam with a correct implementation of weight decay (see here

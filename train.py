@@ -70,7 +70,7 @@ data_module = GeoSRData(
     scale=4,
     extension=".tif",
     patch_size=(128, 128),
-    batch_size=1,
+    batch_size=4,
     n_data_jobs=2,
     # spectrum_end = 12000, # for pixels values scaling
 )
@@ -80,36 +80,36 @@ trainer = Trainer(
     # accelerator = "cpu",
     deterministic=True,  # turn off/on random seed
     precision=32,
-    accumulate_grad_batches=1,
+    accumulate_grad_batches=4,
     log_every_n_steps=50,
-    val_check_interval=400,
-    max_epochs=3,
+    val_check_interval=1000,
+    max_epochs=10,
     # limit_train_batches = 11,
-    limit_val_batches=5,
+    limit_val_batches=4,
     logger=WandbLogger(
         project="GeoSR",
         log_model=False,  # "all", True or False
-        offline=True,
+        offline=False,
         # save_dir=os.environ["WORK_PATH"] + "logs/" # where to write wandb logs (not that important)
         save_dir="logs/",
     ),
     callbacks=[
-        # LogResults(
-        #     lr_path=os.environ["MAIN_DATA_PATH"] + os.environ["EVAL_DATA_SUB_PATH_LR"],
-        #     hr_path=os.environ["MAIN_DATA_PATH"] + os.environ["EVAL_DATA_SUB_PATH_HR"],
-        #     lr_names=[
-        #         "T43QEC_20220404_RGBN_10m_14_1.tif",
-        #         "T35TMJ_20210823_RGBN_10m_13_2.tif",
-        #     ],
-        #     hr_names=[
-        #         "T43QEC_20220404_RGBN_PS_2_5m_14_1.tif",
-        #         "T35TMJ_20210823_RGBN_PS_2_5m_13_2.tif",
-        #     ],
-        #     log_to_wandb=True,
-        #     log_to_disk=True,
-        #     save_dir="logs/tif/",
-        #     log_every_n_epochs=1,
-        # ),
+        LogResults(
+            lr_path=os.environ["MAIN_DATA_PATH"] + os.environ["EVAL_DATA_SUB_PATH_LR"],
+            hr_path=os.environ["MAIN_DATA_PATH"] + os.environ["EVAL_DATA_SUB_PATH_HR"],
+            lr_names=[
+                "T43QEC_20220404_RGBN_10m_14_1.tif",
+                "T35TMJ_20210823_RGBN_10m_13_2.tif",
+            ],
+            hr_names=[
+                "T43QEC_20220404_RGBN_PS_2_5m_14_1.tif",
+                "T35TMJ_20210823_RGBN_PS_2_5m_13_2.tif",
+            ],
+            log_to_wandb=True,
+            log_to_disk=True,
+            save_dir="logs/tif/",
+            log_every_n_epochs=1,
+        ),
         # ModelCheckpoint(monitor="val_scc", mode="max"),
         # EarlyStopping(monitor="val_scc", min_delta=0.0001, patience=3, mode="max"),
         # LearningRateFinder(min_lr=1e-7, max_lr=1e-4, num_training_steps=100),
