@@ -24,7 +24,7 @@ class GeoSRData(lightning.LightningDataModule):
         self.patch_size = patch_size
         self.batch_size = batch_size
         self.n_data_jobs = n_data_jobs
-        self.prefetch_factor = 1
+        self.prefetch_factor = 1 if self.n_data_jobs > 0 else None
 
         self.main_data_path = os.environ["MAIN_DATA_PATH"]
         self.save_hyperparameters()

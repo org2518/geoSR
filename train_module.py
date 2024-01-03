@@ -35,6 +35,7 @@ class GeoSR(lightning.LightningModule):
         scheduler=None,  # MultiStepLR object or None
         scheduler_MultiStepLR_milestones=None,
         scheduler_MultiStepLR_multiplier=0.1,
+        watch = True,
     ):
         super().__init__()
         self.model = model
@@ -50,7 +51,8 @@ class GeoSR(lightning.LightningModule):
         self.border_size = border_size
         self.scheduler_MultiStepLR_milestones = scheduler_MultiStepLR_milestones
         self.scheduler_MultiStepLR_multiplier = scheduler_MultiStepLR_multiplier
-
+        self.watch = watch 
+        
     def forward(self, imgs):
         singleImg = False
         if len(imgs.shape) == 3: # is it a single picture, or a batch
@@ -73,6 +75,7 @@ class GeoSR(lightning.LightningModule):
             betas=self.betas,
             eps=self.epsilon,
             weight_decay=self.weight_decay,
+            maximize = False,
         )
 
         if self.scheduler_MultiStepLR_milestones is not None:
@@ -146,6 +149,8 @@ class GeoSR(lightning.LightningModule):
 
     def on_fit_start(self):
         self.save_hyperparameters()
+        if self.watch:
+            self.logger.watch(self.model, log="all", log_freq=2, log_graph=True)
 
     def process(self, imgs):
         imgs = imgs.div(self.spectrum_end)

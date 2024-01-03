@@ -65,6 +65,7 @@ lightning_module = GeoSR(
     # scheduler_MultiStepLR_milestones = (100,150),
     scheduler_MultiStepLR_milestones=None,  # None = turn off
     scheduler_MultiStepLR_multiplier=0.1,
+    watch = True,
 )
 data_module = GeoSRData(
     scale=4,
@@ -79,10 +80,13 @@ trainer = Trainer(
     accelerator="gpu",
     # accelerator = "cpu",
     deterministic=True,  # turn off/on random seed
-    precision=32,
+    # gradient_clip_val=0.5,
+    # gradient_clip_algorithm="norm",
+    precision=32, # "16-mixed"
     accumulate_grad_batches=4,
     log_every_n_steps=50,
     val_check_interval=1000,
+    check_val_every_n_epoch=None,
     max_epochs=10,
     # limit_train_batches = 11,
     limit_val_batches=4,
@@ -90,7 +94,6 @@ trainer = Trainer(
         project="GeoSR",
         log_model=False,  # "all", True or False
         offline=False,
-        # save_dir=os.environ["WORK_PATH"] + "logs/" # where to write wandb logs (not that important)
         save_dir="logs/",
     ),
     callbacks=[
