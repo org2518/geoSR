@@ -16,6 +16,7 @@ from lightning.pytorch import Trainer, seed_everything
 import torch.nn as nn
 import torch
 
+from models.srcnn import SRCNN
 # from models.edsr import EDSR, LogModelHyperParams
 from models.swinir import SwinIR, LogModelHyperParams
 
@@ -23,6 +24,11 @@ load_dotenv()
 
 torch.set_float32_matmul_precision("medium")
 seed_everything(42, workers=True)
+
+model = SRCNN(
+    num_channels = 4,
+    scale_factor = 4,
+    )
 
 # model = EDSR(
 #     n_resblocks=64,
@@ -35,18 +41,18 @@ seed_everything(42, workers=True)
     # height = (1024 // upscale // window_size + 1) * window_size
     # width = (720 // upscale // window_size + 1) * window_size
 
-model = SwinIR(
-    upscale=4, 
-    img_size=(128, 128),
-    window_size=8, 
-    img_range=1.,
-    in_chans=4, 
-    depths=[6, 6, 6, 6],
-    embed_dim=60, 
-    num_heads=[6, 6, 6, 6], 
-    mlp_ratio=2, 
-    upsampler='pixelshuffledirect',
-    )
+# model = SwinIR(
+#     upscale=4, 
+#     img_size=(128, 128),
+#     window_size=8, 
+#     img_range=1.,
+#     in_chans=4, 
+#     depths=[6, 6, 6, 6],
+#     embed_dim=60, 
+#     num_heads=[6, 6, 6, 6], 
+#     mlp_ratio=2, 
+#     upsampler='pixelshuffledirect',
+#     )
 
 lightning_module = GeoSR(
     model=model,
