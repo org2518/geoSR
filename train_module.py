@@ -1,7 +1,8 @@
 import lightning
 import torch.nn as nn
 import torch.optim as optim
-from sewar.full_ref import scc as SCC
+from sewar.full_ref import scc as SCC_sewar
+from torchmetrics.image import SpatialCorrelationCoefficient as SCC
 import numpy as np
 import torch
 from torchvision.transforms.v2.functional import center_crop
@@ -29,6 +30,7 @@ class GeoSR(lightning.LightningModule):
         # SCC
         scc_window=[[-1, -1, -1], [-1, 8, -1], [-1, -1, -1]],
         scc_ws=8,
+        scc_device = "cuda",
         # PSNR
         data_range=1.0,  # Max pixel value going into the network (more or less)
         border_size=0,  # how many pixels to crop befor calculating loss and metrics
@@ -52,6 +54,9 @@ class GeoSR(lightning.LightningModule):
         self.scheduler_MultiStepLR_milestones = scheduler_MultiStepLR_milestones
         self.scheduler_MultiStepLR_multiplier = scheduler_MultiStepLR_multiplier
         self.watch = watch 
+
+        self.scc = SCC(high_pass_filter=torch.tensor(self.scc_window, device=scc_device), window_size=self.scc_ws)
+        self.save_hyperparameters(ignore=['model'])
         
     def forward(self, imgs):
         singleImg = False
@@ -161,13 +166,20 @@ class GeoSR(lightning.LightningModule):
         imgs = torch.clamp(imgs, 0, 65535)
         return imgs
 
-    def mean_scc_over_batch(self, hr, hr_pred):
+    def mean_scc_over_batch_sewar(self, hr, hr_pred):
         sccs = []
         for hri, hr_predi in zip(hr, hr_pred):
             hri = hri.cpu().numpy().swapaxes(0, 1).swapaxes(1, 2)
             hr_predi = hr_predi.cpu().numpy().swapaxes(0, 1).swapaxes(1, 2)
-            scc = SCC(hri, hr_predi, win=self.scc_window, ws=self.scc_ws)
-            sccs.append(scc)
+            scc_val = SCC_sewar(hri, hr_predi, win=self.scc_window, ws=self.scc_ws)
+            sccs.append(scc_val)
+        return np.mean(sccs)
+
+    def mean_scc_over_batch(self, hr, hr_pred):
+        sccs = []
+        for hri, hr_predi in zip(hr, hr_pred):
+            scc_val = self.scc(hr_predi, hri)
+            sccs.append(scc_val.item())
         return np.mean(sccs)
 
     def remove_border(self, img):
