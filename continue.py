@@ -1,30 +1,29 @@
+
+import torch
 from data_module import GeoSRData
 from train_module import GeoSR
-from callbacks import LogResults
-from dotenv import load_dotenv
-import os
-from lightning.pytorch.loggers.csv_logs import CSVLogger
-from lightning.pytorch.loggers import WandbLogger
-from lightning.pytorch.callbacks import (
-    EarlyStopping,
-    LearningRateFinder,
-    RichModelSummary,
-    LearningRateMonitor,
-    ModelCheckpoint,
-)
 from lightning.pytorch import Trainer, seed_everything
-import torch.nn as nn
-import torch
-
 from models.srcnn import SRCNN
-# from models.edsr import EDSR, LogModelHyperParams
-from models.swinir import SwinIR, LogModelHyperParams
-
+from dotenv import load_dotenv
+from lightning.pytorch.loggers import WandbLogger
+import wandb
+from pathlib import Path
+from collections import OrderedDict
+import sys
+from lightning.pytorch.callbacks import (
+    ModelCheckpoint,
+    LearningRateMonitor,
+)
 load_dotenv()
 
 torch.set_float32_matmul_precision("medium")
 seed_everything(42, workers=True)
 
+# reference can be retrieved in artifacts panel
+# "VERSION" can be a version (ex: "v2") or an alias ("latest or "best")
+checkpoint_reference = "<user>/GeoSR/model-3j0ng5qq:latest"
+
+# Define model with the same parameters as in the initial training
 model = SRCNN(
     num_channels = 4,
     scale_factor = 4,
@@ -50,33 +49,6 @@ model = SRCNN(
 #     upsampler='pixelshuffledirect',
 #     )
 
-lightning_module = GeoSR(
-    model=model,
-    loss_function=nn.MSELoss(),  # or nn.L1Loss()
-    spectrum_end=12000,  # for pixels values scaling
-    # torch.tensor([[[1]],[[1]], [[1]], [[1]]])
-    # Adam settings
-    learning_rate=1e-5,  # Initial learning rate
-    weight_decay=0,  # Make optimizer forgot old steps, 0 = turn off
-    # Metrics
-    scc_window=[[-1, -1, -1], [-1, 8, -1], [-1, -1, -1]],
-    scc_ws=8,
-    data_range=1,  # PSNR and SSIM
-    border_size=8,
-    # You can multiply the learning rate by 0.1 after 100 and 150 epochs
-    # scheduler_MultiStepLR_milestones = (100,150),
-    scheduler_MultiStepLR_milestones=None,  # None = turn off
-    scheduler_MultiStepLR_multiplier=0.1,
-    watch = True,
-)
-data_module = GeoSRData(
-    scale=4,
-    extension=".tif",
-    patch_size=(128, 128),
-    batch_size=4,
-    n_data_jobs=2,
-    # spectrum_end = 12000, # for pixels values scaling
-)
 
 trainer = Trainer(
     accelerator="gpu",
@@ -85,13 +57,13 @@ trainer = Trainer(
     # gradient_clip_val=0.5,
     # gradient_clip_algorithm="norm",
     precision=32, # "16-mixed"
-    accumulate_grad_batches=1,
+    accumulate_grad_batches=4,
     log_every_n_steps=50,
     val_check_interval=1000,
     check_val_every_n_epoch=None,
     max_epochs=1,
-    # limit_train_batches = None,
-    # limit_val_batches=None,
+    # limit_train_batches = 11,
+    limit_val_batches=4,
     logger=WandbLogger(
         project="GeoSR",
         log_model="all",  # Must be "all" for checkpointing 
@@ -137,5 +109,21 @@ trainer = Trainer(
     # default_root_dir=os.environ["WORK_PATH"],
 )
 
-trainer.fit(lightning_module, data_module)
-# trainer.test(lightning_module, data_module)
+##########################
+# download checkpoint locally (if not already cached)
+run = wandb.init(project="GeoSR")
+artifact = run.use_artifact(checkpoint_reference, type="model")
+artifact_dir = artifact.download()
+
+# loading checkpoint
+ckpt = torch.load(Path(artifact_dir) / "model.ckpt")
+model_ckpt = OrderedDict({k.removeprefix("model."):v for k,v in ckpt["state_dict"].items() if k.startswith("model.")})
+try:
+    model.load_state_dict(model_ckpt)
+except KeyError as ex:
+    print("KeyError: Model parameters do not match the source model.")
+    sys.exit(1)
+lightning_module = GeoSR.load_from_checkpoint(Path(artifact_dir) / "model.ckpt", model=model)
+
+
+trainer.fit(lightning_module, GeoSRData(**ckpt["datamodule_hyper_parameters"]), ckpt_path=Path(artifact_dir) / "model.ckpt")
