@@ -30,32 +30,29 @@ class GeoSRData(lightning.LightningDataModule):
         self.save_hyperparameters()
 
     def setup(self, stage):
-        match stage:
-            case "fit" | "validate":
-                self.ds_train = GeoSRDataset(
-                    lr_path=self.main_data_path + os.environ["TRAIN_DATA_SUB_PATH_LR"],
-                    hr_path=self.main_data_path + os.environ["TRAIN_DATA_SUB_PATH_HR"],
-                    scale=self.scale,
-                    extension=self.extension,
-                    patch_size=self.patch_size,
-                )
-                self.ds_val = GeoSRDataset(
-                    lr_path=self.main_data_path + os.environ["EVAL_DATA_SUB_PATH_LR"],
-                    hr_path=self.main_data_path + os.environ["EVAL_DATA_SUB_PATH_HR"],
-                    scale=self.scale,
-                    extension=self.extension,
-                    patch_size=None,
-                )
-            case "test":
-                self.ds_test = GeoSRDataset(
-                    lr_path=self.main_data_path + os.environ["TEST_DATA_SUB_PATH_LR"],
-                    hr_path=self.main_data_path + os.environ["TEST_DATA_SUB_PATH_HR"],
-                    scale=self.scale,
-                    extension=self.extension,
-                    patch_size=None,
-                )
-            case "predict":
-                pass
+        if stage == "fit" or stage == "validate":
+            self.ds_train = GeoSRDataset(
+                lr_path=self.main_data_path + os.environ["TRAIN_DATA_SUB_PATH_LR"],
+                hr_path=self.main_data_path + os.environ["TRAIN_DATA_SUB_PATH_HR"],
+                scale=self.scale,
+                extension=self.extension,
+                patch_size=self.patch_size,
+            )
+            self.ds_val = GeoSRDataset(
+                lr_path=self.main_data_path + os.environ["EVAL_DATA_SUB_PATH_LR"],
+                hr_path=self.main_data_path + os.environ["EVAL_DATA_SUB_PATH_HR"],
+                scale=self.scale,
+                extension=self.extension,
+                patch_size=None,
+            )
+        if stage == "test":
+            self.ds_test = GeoSRDataset(
+                lr_path=self.main_data_path + os.environ["TEST_DATA_SUB_PATH_LR"],
+                hr_path=self.main_data_path + os.environ["TEST_DATA_SUB_PATH_HR"],
+                scale=self.scale,
+                extension=self.extension,
+                patch_size=None,
+            )
 
     def train_dataloader(self):
         return DataLoader(
