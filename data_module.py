@@ -148,3 +148,35 @@ class GeoSRDataset(torch_data.Dataset):
         hr = torch.tensor(hr)
         # img shape (C, H, W)
         return lr, hr
+
+
+class GeoSRDatasetInference(torch_data.Dataset):
+    def __init__(
+        self,
+        lr_path,
+        extension=".tif",
+    ):
+        super().__init__()
+
+        self.extension = extension
+        self.files_lr = [
+            lr_path + file
+            for file in os.listdir(lr_path)
+            if file.endswith(self.extension)
+        ]
+        self.files_lr.sort()
+
+    def __len__(self):
+        return len(self.files_lr)
+
+    def __getitem__(self, idx):
+        f_lr = self.files_lr[idx]
+
+        lr = imageio.v3.imread(f_lr)
+        # img shape (H, W, C)
+
+        lr = np.float32(lr.swapaxes(0, 1).swapaxes(2, 0))
+        lr = torch.tensor(lr)
+        # img shape (C, H, W)
+        f_lr = f_lr.split("/")[-1].split(".")[0]
+        return lr, f_lr

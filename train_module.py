@@ -149,8 +149,10 @@ class GeoSR(lightning.LightningModule):
         self.log("test_psnr", psnr)
         # self.log("val_ssim", ssim)
 
-    # def predict_step(self, batch, batch_idx):
-    #     pass
+    def predict_step(self, batch, batch_idx):
+        lr, hr = batch
+        lr = self.process(lr)
+        return self.model(lr)
 
     def on_fit_start(self):
         self.save_hyperparameters()
