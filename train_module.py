@@ -152,7 +152,8 @@ class GeoSR(lightning.LightningModule):
     def predict_step(self, batch, batch_idx):
         lr, hr = batch
         lr = self.process(lr)
-        return self.model(lr)
+        hr_pred = self.model(lr)
+        return self.inv_process(hr_pred)
 
     def on_fit_start(self):
         self.save_hyperparameters()
