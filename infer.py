@@ -1,4 +1,3 @@
-
 import torch
 from torch.utils.data import DataLoader
 from data_module import GeoSRData, GeoSRDatasetInference
@@ -23,25 +22,34 @@ load_dotenv()
 
 torch.set_float32_matmul_precision("medium")
 seed_everything(42, workers=True)
-save_dir = "./output"
+save_dir = "/path/to/output"
 
+# loading checkpoint
+# checkpoint from wandb
 # reference can be retrieved in artifacts panel
 # "VERSION" can be a version (ex: "v2") or an alias ("latest or "best")
-checkpoint_reference = "<user>/GeoSR/model-3j0ng5qq:latest"
+checkpoint_reference = "<user>/GeoSR_PhD/model-r5p0tmvu:latest"
+api = wandb.Api()
+artifact = api.artifact(checkpoint_reference)
+artifact_dir = artifact.download()
+ckpt_path = Path(artifact_dir) / "model.ckpt"
+
+# checkpoint from disk
+# ckpt_path  = torch.load(".ckpt")
 
 # Define model with the same parameters as in the initial training
-model = SRCNN(
-    num_channels = 4,
-    scale_factor = 4,
-    )
+# model = SRCNN(
+#     num_channels = 4,
+#     scale_factor = 2,
+#     )
 
-# model = EDSR(
-#     n_resblocks=16,
-#     n_feats=64,
-#     scale=4,
-#     kernel_size=3,
-#     res_scale=.1
-# )
+model = EDSR(
+    n_resblocks=32,
+    n_feats=256,
+    scale=2,
+    kernel_size=3,
+    n_colors=4,
+)
 
 # model = SwinIR(
 #     upscale=4, 
@@ -57,12 +65,12 @@ model = SRCNN(
 #     )
 
 dataset = GeoSRDatasetInference(
-    lr_path = "/path/to/your/data/",
+    lr_path = "/path/to/lr_data/",
     extension=".tif",
 )
 dataloader = DataLoader(
     dataset=dataset,
-    batch_size=1,
+    batch_size=4,
     shuffle=False,
     num_workers=2,
     pin_memory=True,
@@ -76,19 +84,15 @@ trainer = Trainer(
 
 ##########################
 # download checkpoint locally (if not already cached)
-api = wandb.Api()
-artifact = api.artifact(checkpoint_reference)
-artifact_dir = artifact.download()
 
-# loading checkpoint
-ckpt = torch.load(Path(artifact_dir) / "model.ckpt")
+ckpt = torch.load(ckpt_path)
 model_ckpt = OrderedDict({k.removeprefix("model."):v for k,v in ckpt["state_dict"].items() if k.startswith("model.")})
 try:
     model.load_state_dict(model_ckpt)
 except KeyError as ex:
     print("KeyError: Model parameters do not match the source model.")
     sys.exit(1)
-lightning_module = GeoSR.load_from_checkpoint(Path(artifact_dir) / "model.ckpt", model=model)
+lightning_module = GeoSR.load_from_checkpoint(ckpt_path, model=model)
 
 # Preparing output
 save_dir = Path(save_dir)
@@ -106,7 +110,7 @@ with torch.no_grad():
             hr_predi = hr_predi.swapaxes(0, 1).swapaxes(1, 2)
             hr_predi = np.uint16(hr_predi)
             imageio.v3.imwrite(
-                save_dir / (f_lri + "_SR.tif"),
+                save_dir / (f_lri + ".tif"),
                 hr_predi,
                 extension=".tif",
             )
