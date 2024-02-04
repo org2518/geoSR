@@ -2,6 +2,9 @@
 logs
 artifacts 
 wandb
+jobs
+outputs
+trains
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

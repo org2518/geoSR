@@ -86,8 +86,8 @@ class GeoSR(lightning.LightningModule):
         if self.scheduler_MultiStepLR_milestones is not None:
             scheduler = optim.lr_scheduler.MultiStepLR(
                 optimizer,
-                milestones=scheduler_MultiStepLR_milestones,
-                gamma=scheduler_MultiStepLR_multiplier,
+                milestones=self.scheduler_MultiStepLR_milestones,
+                gamma=self.scheduler_MultiStepLR_multiplier,
             )
             return [optimizer], [scheduler]
         else:
