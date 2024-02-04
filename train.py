@@ -61,7 +61,7 @@ lightning_module = GeoSR(
     # Metrics
     scc_window=[[-1, -1, -1], [-1, 8, -1], [-1, -1, -1]],
     scc_ws=8,
-    data_range=1,  # PSNR and SSIM
+    data_range=65535,  # max pixel values (bit range: 8bit-255, 16bit-65535)
     border_size=8,
     # You can multiply the learning rate by 0.1 after 100 and 150 epochs
     # scheduler_MultiStepLR_milestones = (100,150),

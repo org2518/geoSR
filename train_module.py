@@ -21,7 +21,7 @@ class GeoSR(lightning.LightningModule):
         self,
         model,
         loss_function=nn.MSELoss(),  # or nn.L1Loss()
-        spectrum_end=65536,
+        spectrum_end=65535,
         # Adam settings
         learning_rate=1e-5,  # Initial learning rate
         betas=(0.9, 0.999),  # I have no idea what it is
@@ -32,7 +32,7 @@ class GeoSR(lightning.LightningModule):
         scc_ws=8,
         scc_device = "cuda",
         # PSNR
-        data_range=1.0,  # Max pixel value going into the network (more or less)
+        data_range=65535,  # max pixel values (bit range: 8bit-255, 16bit-65535)
         border_size=0,  # how many pixels to crop befor calculating loss and metrics
         scheduler=None,  # MultiStepLR object or None
         scheduler_MultiStepLR_milestones=None,
@@ -97,11 +97,11 @@ class GeoSR(lightning.LightningModule):
         # "batch" is the output of the training data loader.
         lr, hr = batch
         lr = self.process(lr)
-        hr = self.process(hr)
         pred_hr = self.model(lr)
 
         hr = self.remove_border(hr)
         pred_hr = self.remove_border(pred_hr)
+        pred_hr = self.inv_process(pred_hr) # clamp could be removed 
 
         loss = self.loss_function(pred_hr, hr)
 
@@ -111,11 +111,11 @@ class GeoSR(lightning.LightningModule):
     def validation_step(self, batch, batch_idx):
         lr, hr = batch
         lr = self.process(lr)
-        hr = self.process(hr)
         pred_hr = self.model(lr)
 
         hr = self.remove_border(hr)
         pred_hr = self.remove_border(pred_hr)
+        pred_hr = self.inv_process(pred_hr) # clamp could be removed 
 
         loss = self.loss_function(pred_hr, hr)
 
@@ -133,11 +133,11 @@ class GeoSR(lightning.LightningModule):
     def test_step(self, batch, batch_idx):
         lr, hr = batch
         lr = self.process(lr)
-        hr = self.process(hr)
         pred_hr = self.model(lr)
 
         hr = self.remove_border(hr)
         pred_hr = self.remove_border(pred_hr)
+        pred_hr = self.inv_process(pred_hr) # clamp could be removed 
 
         # SCC is quite slow.
         scc = self.mean_scc_over_batch(hr, pred_hr)
@@ -166,7 +166,7 @@ class GeoSR(lightning.LightningModule):
 
     def inv_process(self, imgs):
         imgs = imgs.mul(self.spectrum_end)
-        imgs = torch.clamp(imgs, 0, 65535)
+        imgs = torch.clamp(imgs, 0, self.data_range)
         return imgs
 
     def mean_scc_over_batch_sewar(self, hr, hr_pred):
