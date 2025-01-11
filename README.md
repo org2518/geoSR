@@ -2,7 +2,7 @@
 A basic setup for training and testing super-resolution models on geospatial images. 
 
 ## Workflow
-This project follows [lightning](https://lightning.ai/docs/pytorch/stable/) code organization principles. It is important to keep the code simple, as it should be easily accessible. Main files:
+This project follows [lightning](https://lightning.ai/docs/pytorch/stable/) code organization principles. Main files:
 - `train.py` initialize all parts nad make them spin. Here you need to setup all parameters.
 - `lightning_module` control training/validation/test/prediction step, as wall as metrics calculation and logging.
 - `data_module`:

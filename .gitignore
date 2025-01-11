@@ -5,6 +5,9 @@ wandb
 jobs
 outputs
 trains
+**.ckpt
+output
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

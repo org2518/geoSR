@@ -2,6 +2,8 @@
 # SwinIR: Image Restoration Using Swin Transformer, https://arxiv.org/abs/2108.10257
 # Originally Written by Ze Liu, Modified by Jingyun Liang.
 # -----------------------------------------------------------------------------------
+# Source: https://github.com/JingyunLiang/SwinIR
+# Addopted to the geoSR project
 
 import math
 import torch

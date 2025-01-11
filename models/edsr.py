@@ -1,3 +1,6 @@
+# Source: https://github.com/sanghyun-son/EDSR-PyTorch
+# Addopted to the geoSR project
+
 import math
 import torch
 import torch.nn as nn
