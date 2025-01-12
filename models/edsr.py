@@ -2,10 +2,12 @@
 # Addopted to the geoSR project
 
 import math
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from lightning.pytorch.callbacks import Callback
+
 
 def default_conv(in_channels, out_channels, kernel_size, bias=True):
     return nn.Conv2d(

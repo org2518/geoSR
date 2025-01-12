@@ -1,15 +1,15 @@
 # geoSR
-A basic setup for training and testing super-resolution models on geospatial images. 
+A basic setup for training and testing super-resolution models on geospatial images.
 
 ## Workflow
 This project follows [lightning](https://lightning.ai/docs/pytorch/stable/) code organization principles. Main files:
 - `train.py` initialize all parts nad make them spin. Here you need to setup all parameters.
 - `lightning_module` control training/validation/test/prediction step, as wall as metrics calculation and logging.
 - `data_module`:
-    - `GeoSRDataset` extract pairs of pictures from two folders low resolution (lr) and high resolution (hr). 
+    - `GeoSRDataset` extract pairs of pictures from two folders low resolution (lr) and high resolution (hr).
     - `GeoSRData` decide how to load the data to the training loop.
 - `models` - the torch `nn.Module` with a forward function that takes a batch of low resolution pictures and returns their higher resolution version. The pictures are torch 4-dim tensors with a shape (B,C,H,W).
-- `callbacks` - additional stuff that is not a core part of a training or data loading but it is nice to have. 
+- `callbacks` - additional stuff that is not a core part of a training or data loading but it is nice to have.
 - `logs`
 ## Data preparation
 Suggested data structure:
@@ -42,7 +42,7 @@ The folders should have only matching pictures. The number of pictures has to be
 ## Run
 
 ### Setup
-Prepare a virtual environment. 
+Prepare a virtual environment.
 ```python
 python -m venv venv
 pip install -r requirements.txt
