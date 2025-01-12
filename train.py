@@ -1,54 +1,60 @@
-from data_module import GeoSRData
-from train_module import GeoSR
-from callbacks import LogResults
-from dotenv import load_dotenv
 import os
-from lightning.pytorch.loggers.csv_logs import CSVLogger
-from lightning.pytorch.loggers import WandbLogger
+
+import torch
+import torch.nn as nn
+from dotenv import load_dotenv
+from lightning.pytorch import Trainer, seed_everything
 from lightning.pytorch.callbacks import (
     EarlyStopping,
     LearningRateFinder,
-    RichModelSummary,
     LearningRateMonitor,
     ModelCheckpoint,
+    RichModelSummary,
 )
-from lightning.pytorch import Trainer, seed_everything
-import torch.nn as nn
-import torch
+from lightning.pytorch.loggers import WandbLogger
+from lightning.pytorch.loggers.csv_logs import CSVLogger
 
+from callbacks import LogResults
+from data_module import GeoSRData
 from models.srcnn import SRCNN
+
 # from models.edsr import EDSR, LogModelHyperParams
-from models.swinir import SwinIR, LogModelHyperParams
+from models.swinir import LogModelHyperParams, SwinIR
+from training_module import GeoSR
 
 load_dotenv()
 
 torch.set_float32_matmul_precision("medium")
 seed_everything(42, workers=True)
 
-model = SRCNN(
-    num_channels = 4,
-    scale_factor = 4,
-    )
+# Choose model
+model_class = SRCNN
+model_params = {
+    "num_channels": 4,
+    "scale_factor": 4,
+}
 
-# model = EDSR(
-#     n_resblocks=64,
-#     n_feats=128,
-#     scale=4,
-#     kernel_size=3,
-# )
+# model_class = EDSR
+# model_params = {
+#     n_resblocks:64,
+#     n_feats:128,
+#     scale:4,
+#     kernel_size:3,
+# }
 
-# model = SwinIR(
-#     upscale=4, 
-#     img_size=(128, 128),
-#     window_size=8, 
-#     img_range=1.,
-#     in_chans=4, 
-#     depths=[6, 6, 6, 6],
-#     embed_dim=60, 
-#     num_heads=[6, 6, 6, 6], 
-#     mlp_ratio=2, 
-#     upsampler='pixelshuffledirect',
-#     )
+# model_class = SwinIR
+# model_params = {
+#     upscale:4,
+#     img_size:(128, 128),
+#     window_size:8,
+#     img_range:1.,
+#     in_chans:4,
+#     depths:[6, 6, 6, 6],
+#     embed_dim:60,
+#     num_heads:[6, 6, 6, 6],
+#     mlp_ratio:2,
+#     upsampler:'pixelshuffledirect',
+#     }
 
 lightning_module = GeoSR(
     model=model,
@@ -67,7 +73,7 @@ lightning_module = GeoSR(
     # scheduler_MultiStepLR_milestones = (100,150),
     scheduler_MultiStepLR_milestones=None,  # None = turn off
     scheduler_MultiStepLR_multiplier=0.1,
-    watch = True,
+    watch=True,
 )
 data_module = GeoSRData(
     scale=4,
@@ -84,7 +90,7 @@ trainer = Trainer(
     deterministic=True,  # turn off/on random seed
     # gradient_clip_val=0.5,
     # gradient_clip_algorithm="norm",
-    precision=32, # "16-mixed"
+    precision=32,  # "16-mixed"
     accumulate_grad_batches=1,
     log_every_n_steps=50,
     val_check_interval=1000,
@@ -94,7 +100,7 @@ trainer = Trainer(
     # limit_val_batches=None,
     logger=WandbLogger(
         project="GeoSR",
-        log_model="all",  # Must be "all" for checkpointing 
+        log_model="all",  # Must be "all" for checkpointing
         offline=False,
         save_dir="logs/",
     ),
@@ -117,14 +123,14 @@ trainer = Trainer(
         ),
         ModelCheckpoint(monitor="val_scc", mode="max"),
         # ModelCheckpoint(
-        #     dirpath=None, 
-        #     filename=None, 
-        #     monitor="val_scc", 
-        #     mode='max', 
-        #     save_last=True, 
-        #     save_top_k=1,   
-        #     every_n_train_steps=None, 
-        #     train_time_interval=None, 
+        #     dirpath=None,
+        #     filename=None,
+        #     monitor="val_scc",
+        #     mode='max',
+        #     save_last=True,
+        #     save_top_k=1,
+        #     every_n_train_steps=None,
+        #     train_time_interval=None,
         #     every_n_epochs=None,
         #     ),
         # EarlyStopping(monitor="val_scc", min_delta=0.0001, patience=3, mode="max"),

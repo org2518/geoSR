@@ -91,7 +91,7 @@ sympy==1.12
 termcolor==2.4.0
 timm==0.9.12
 torch==2.1.2
-torchmetrics==1.2.1
+torchmetrics==1.6.1
 torchvision==0.16.2
 tornado==6.4
 tqdm==4.66.1

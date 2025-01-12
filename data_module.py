@@ -1,12 +1,14 @@
-import torch
+import os
+from pathlib import Path
+
+import imageio
+import lightning
 import numpy as np
+import torch
 import torch.nn as nn
 import torch.utils.data as torch_data
-import lightning
-import os
-from torchvision.transforms.v2.functional import crop
-import imageio
 from torch.utils.data import DataLoader
+from torchvision.transforms.v2.functional import crop
 
 
 class GeoSRData(lightning.LightningDataModule):
@@ -157,10 +159,11 @@ class GeoSRDatasetInference(torch_data.Dataset):
         extension=".tif",
     ):
         super().__init__()
+        lr_path = Path(lr_path)
 
         self.extension = extension
         self.files_lr = [
-            lr_path + file
+            str(lr_path / file)
             for file in os.listdir(lr_path)
             if file.endswith(self.extension)
         ]
