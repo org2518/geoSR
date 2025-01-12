@@ -36,24 +36,24 @@ model_params = {
 
 # model_class = EDSR
 # model_params = {
-#     n_resblocks:64,
-#     n_feats:128,
-#     scale:4,
-#     kernel_size:3,
+#     "n_resblocks":64,
+#     "n_feats":128,
+#     "scale":4,
+#     "kernel_size":3,
 # }
 
 # model_class = SwinIR
 # model_params = {
-#     upscale:4,
-#     img_size:(128, 128),
-#     window_size:8,
-#     img_range:1.,
-#     in_chans:4,
-#     depths:[6, 6, 6, 6],
-#     embed_dim:60,
-#     num_heads:[6, 6, 6, 6],
-#     mlp_ratio:2,
-#     upsampler:'pixelshuffledirect',
+#     "upscale":4, 
+#     "img_size":(128, 128),
+#     "window_size":8, 
+#     "img_range":1.,
+#     "in_chans":4, 
+#     "depths":[6, 6, 6, 6],
+#     "embed_dim":60, 
+#     "num_heads":[6, 6, 6, 6], 
+#     "mlp_ratio":2, 
+#     "upsampler":'pixelshuffledirect',
 #     }
 
 lightning_module = GeoSR(
