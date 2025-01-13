@@ -25,7 +25,7 @@ torch.set_float32_matmul_precision("medium")
 seed_everything(42, workers=True)
 output_save_dir = "output/"
 # device = "cuda"
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 checkpoint_dir = "ckpt/"
 checkpoint_name = "SRCNN_S2_PS_x4_16_v2.ckpt"

@@ -1,5 +1,4 @@
 import os
-from torchmetrics.image import SpatialCorrelationCoefficient as SCC
 
 import torch
 import torch.nn as nn
@@ -14,11 +13,12 @@ from lightning.pytorch.callbacks import (
 )
 from lightning.pytorch.loggers import WandbLogger
 from lightning.pytorch.loggers.csv_logs import CSVLogger
+from torchmetrics.image import SpatialCorrelationCoefficient as SCC
 
 from callbacks import LogResults
 from data_module import GeoSRData
-from models.srcnn import SRCNN
 from loss import DoubleLoss
+from models.srcnn import SRCNN
 
 # from models.edsr import EDSR, LogModelHyperParams
 from models.swinir import LogModelHyperParams, SwinIR
@@ -34,7 +34,7 @@ model_class = SRCNN
 model_params = {
     "num_channels": 4,
     "scale_factor": 4,
-    "n_feats" : 128,
+    "n_feats": 128,
 }
 
 # model_class = EDSR
@@ -47,32 +47,34 @@ model_params = {
 
 # model_class = SwinIR
 # model_params = {
-#     "upscale":4, 
+#     "upscale":4,
 #     "img_size":(128, 128),
-#     "window_size":8, 
+#     "window_size":8,
 #     "img_range":1.,
-#     "in_chans":4, 
+#     "in_chans":4,
 #     "depths":[6, 6, 6, 6],
-#     "embed_dim":60, 
-#     "num_heads":[6, 6, 6, 6], 
-#     "mlp_ratio":2, 
+#     "embed_dim":60,
+#     "num_heads":[6, 6, 6, 6],
+#     "mlp_ratio":2,
 #     "upsampler":'pixelshuffledirect',
 #     }
 
 lightning_module = GeoSR(
-    model_class = model_class,
-    model_params = model_params,
-    # loss_function=nn.MSELoss(),  # or nn.L1Loss() 
-    
+    model_class=model_class,
+    model_params=model_params,
+    # loss_function=nn.MSELoss(),  # or nn.L1Loss()
     loss_function=DoubleLoss(
         loss1=nn.L1Loss(),
-        loss2=SCC(high_pass_filter=torch.tensor([[-1, -1, -1], [-1, 8, -1], [-1, -1, -1]], device = "cuda"), window_size=8),
-        f1 = None,
-        f2 = lambda x: 1 - x, 
-        merge_function= torch.mul
+        loss2=SCC(
+            high_pass_filter=torch.tensor(
+                [[-1, -1, -1], [-1, 8, -1], [-1, -1, -1]], device="cuda"
+            ),
+            window_size=8,
+        ),
+        f1=None,
+        f2=lambda x: 1 - x,
+        merge_function=torch.mul,
     ),
-
-
     spectrum_end=12000,  # for pixels values scaling
     # torch.tensor([[[1]],[[1]], [[1]], [[1]]])
     # Adam settings

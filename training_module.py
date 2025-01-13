@@ -60,7 +60,7 @@ class GeoSR(lightning.LightningModule):
         self.save_hyperparameters()
 
         self.model = model_class(**model_params)
-    
+
     def setup(self, stage):
         if self.scc_on_cpu:
             scc_device = "cpu"
@@ -74,7 +74,6 @@ class GeoSR(lightning.LightningModule):
 
         if isinstance(self.spectrum_end, torch.Tensor):
             self.spectrum_end = self.spectrum_end.to(self.device)
-        
 
     def forward(self, imgs):
         singleImg = False
