@@ -4,8 +4,9 @@ import torch
 import torch.nn as nn
 from torchmetrics.functional.image import spatial_correlation_coefficient as scc
 
-scc_mask = torch.tensor([[-1, -1, -1], [-1, 8, -1], [-1, -1, -1]], device="cuda")
-SCC = partial(scc, hp_filter=scc_mask, window_size=8)
+# TODO
+# scc_mask = torch.tensor([[-1, -1, -1], [-1, 8, -1], [-1, -1, -1]], device="cuda")
+# SCC = partial(scc, hp_filter=scc_mask, window_size=8)
 
 
 def oneminusx(x):
@@ -19,10 +20,10 @@ class DoubleLoss(nn.Module):
         super().__init__()
         if isinstance(loss2, str):
             if loss2 == "SCC":
-                loss2 = SCC
+                loss2 = scc
         if isinstance(loss1, str):
             if loss1 == "SCC":
-                loss1 = SCC
+                loss1 = scc
         self.loss1 = loss1
         self.loss2 = loss2
         self.f1 = f1

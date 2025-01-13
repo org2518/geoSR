@@ -9,12 +9,11 @@ from dotenv import load_dotenv
 from lightning.pytorch import Trainer, seed_everything
 from lightning.pytorch.callbacks import LearningRateMonitor, ModelCheckpoint
 from lightning.pytorch.loggers import WandbLogger
-from torchmetrics.image import SpatialCorrelationCoefficient as SCC
 
 import wandb
 from callbacks import LogResults
 from data_module import GeoSRData
-from loss import DoubleLoss, oneminusx, scc_mask
+from loss import DoubleLoss, oneminusx
 from models.edsr import EDSR
 from models.srcnn import SRCNN
 from training_module import GeoSR
