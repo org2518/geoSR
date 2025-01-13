@@ -57,7 +57,7 @@ class GeoSR(lightning.LightningModule):
         self.scheduler_MultiStepLR_milestones = scheduler_MultiStepLR_milestones
         self.scheduler_MultiStepLR_multiplier = scheduler_MultiStepLR_multiplier
         self.watch = watch
-        self.save_hyperparameters(ignore=['loss_function'])
+        self.save_hyperparameters()
 
         self.model = model_class(**model_params)
     

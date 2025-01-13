@@ -86,25 +86,13 @@ trainer = Trainer(
         # LogModelHyperParams(),
     ],
     # profiler="simple",  # use to check what is working slow
-    # default_root_dir=os.environ["WORK_PATH"],
 )
 
 ##########################
-
+ckpt = torch.load(checkpoint_path)
 lightning_module = GeoSR.load_from_checkpoint(checkpoint_path)
 trainer.fit(
     lightning_module,
     GeoSRData(**ckpt["datamodule_hyper_parameters"]),
     ckpt_path=checkpoint_path,
 )
-
-
-# loading checkpoint
-# ckpt = torch.load(Path(artifact_dir) / "model.ckpt")
-# model_ckpt = OrderedDict({k.removeprefix("model."):v for k,v in ckpt["state_dict"].items() if k.startswith("model.")})
-# try:
-#     model.load_state_dict(model_ckpt)
-# except KeyError as ex:
-#     print("KeyError: Model parameters do not match the source model.")
-#     sys.exit(1)
-# lightning_module = GeoSR.load_from_checkpoint(Path(artifact_dir) / "model.ckpt", model=model)

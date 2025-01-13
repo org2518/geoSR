@@ -24,11 +24,12 @@ load_dotenv()
 torch.set_float32_matmul_precision("medium")
 seed_everything(42, workers=True)
 output_save_dir = "output/"
-device = "cuda"
+# device = "cuda"
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 checkpoint_dir = "ckpt/"
-# checkpoint_name = "SRCNN_S2_PS_x4_16_v2.ckpt"
-checkpoint_name = "EDSR_S2_PS_x4_16_v2.ckpt"
+checkpoint_name = "SRCNN_S2_PS_x4_16_v2.ckpt"
+# checkpoint_name = "EDSR_S2_PS_x4_16_v2.ckpt"
 checkpoint_path = Path(checkpoint_dir) / checkpoint_name
 
 # Download checkpoint from wandb:
@@ -38,12 +39,12 @@ checkpoint_path = Path(checkpoint_dir) / checkpoint_name
 # checkpoint_path = download_checkpoint(checkpoint_reference)
 
 MAIN_DATA_PATH = os.getenv("MAIN_DATA_PATH")
-EVAL_DATA_SUB_PATH_LR = os.getenv("EVAL_DATA_SUB_PATH_LR")
-if MAIN_DATA_PATH is None or EVAL_DATA_SUB_PATH_LR is None:
+DATA_SUB_PATH_LR = os.getenv("TEST_DATA_SUB_PATH_LR")
+if MAIN_DATA_PATH is None or DATA_SUB_PATH_LR is None:
     raise EnvironmentError("Setup .env file")
 
 dataset = GeoSRDatasetInference(
-    lr_path=Path(MAIN_DATA_PATH) / EVAL_DATA_SUB_PATH_LR,
+    lr_path=Path(MAIN_DATA_PATH) / DATA_SUB_PATH_LR,
     extension=".tif",
 )
 dataloader = DataLoader(
@@ -79,7 +80,7 @@ with torch.no_grad():
             hr_predi = hr_predi.swapaxes(0, 1).swapaxes(1, 2)
             hr_predi = np.uint16(hr_predi)
             imageio.v3.imwrite(
-                save_dir / (f_lri + "_123.tif"),
+                save_dir / (f_lri + "_SR_SRCNN.tif"),
                 hr_predi,
                 extension=".tif",
             )

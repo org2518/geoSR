@@ -1,4 +1,5 @@
 import os
+from torchmetrics.image import SpatialCorrelationCoefficient as SCC
 
 import torch
 import torch.nn as nn
@@ -17,6 +18,7 @@ from lightning.pytorch.loggers.csv_logs import CSVLogger
 from callbacks import LogResults
 from data_module import GeoSRData
 from models.srcnn import SRCNN
+from loss import DoubleLoss
 
 # from models.edsr import EDSR, LogModelHyperParams
 from models.swinir import LogModelHyperParams, SwinIR
@@ -32,6 +34,7 @@ model_class = SRCNN
 model_params = {
     "num_channels": 4,
     "scale_factor": 4,
+    "n_feats" : 128,
 }
 
 # model_class = EDSR
@@ -57,8 +60,19 @@ model_params = {
 #     }
 
 lightning_module = GeoSR(
-    model=model,
-    loss_function=nn.MSELoss(),  # or nn.L1Loss()
+    model_class = model_class,
+    model_params = model_params,
+    # loss_function=nn.MSELoss(),  # or nn.L1Loss() 
+    
+    loss_function=DoubleLoss(
+        loss1=nn.L1Loss(),
+        loss2=SCC(high_pass_filter=torch.tensor([[-1, -1, -1], [-1, 8, -1], [-1, -1, -1]], device = "cuda"), window_size=8),
+        f1 = None,
+        f2 = lambda x: 1 - x, 
+        merge_function= torch.mul
+    ),
+
+
     spectrum_end=12000,  # for pixels values scaling
     # torch.tensor([[[1]],[[1]], [[1]], [[1]]])
     # Adam settings
@@ -140,7 +154,6 @@ trainer = Trainer(
         # LogModelHyperParams(),
     ],
     # profiler="simple",  # use to check what is working slow
-    # default_root_dir=os.environ["WORK_PATH"],
 )
 
 trainer.fit(lightning_module, data_module)
