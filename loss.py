@@ -1,12 +1,26 @@
 import torch
 import torch.nn as nn
+from torchmetrics.functional.image import spatial_correlation_coefficient as scc
+from functools import partial
 
+
+scc_mask = torch.tensor([[-1, -1, -1], [-1, 8, -1], [-1, -1, -1]], device = "cuda")
+SCC = partial(scc, hp_filter = scc_mask, window_size=8)
+
+def oneminusx(x):
+    return 1 - x
 
 class DoubleLoss(nn.Module):
     """fmerge(f1(loss1(pred,target)), f2(loss2(pred,target)))"""
 
     def __init__(self, loss1, loss2, f1=None, f2=None, merge_function=torch.sum):
         super().__init__()
+        if isinstance(loss2,str):
+            if loss2 == "SCC":
+                loss2 = SCC
+        if isinstance(loss1,str):
+            if loss1 == "SCC":
+                loss1 = SCC
         self.loss1 = loss1
         self.loss2 = loss2
         self.f1 = f1

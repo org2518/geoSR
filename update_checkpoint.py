@@ -6,7 +6,7 @@ from training_module import GeoSR
 from lightning.pytorch import Trainer, seed_everything
 from torchmetrics.image import SpatialCorrelationCoefficient as SCC
 import torch.nn as nn
-from loss import DoubleLoss
+from loss import DoubleLoss, oneminusx, scc_mask
 from models.srcnn import SRCNN
 from models.edsr import EDSR
 from dotenv import load_dotenv
@@ -26,8 +26,10 @@ torch.set_float32_matmul_precision("medium")
 seed_everything(42, workers=True)
 
 checkpoint_dir = "ckpt/"
-checkpoint_name = "SRCNN_S2_PS_x4_16.ckpt"
-checkpoint_new_name = "SRCNN_S2_PS_x4_16_v3"
+# checkpoint_name = "SRCNN_S2_PS_x4_16.ckpt"
+# checkpoint_new_name = "SRCNN_S2_PS_x4_16_v3"
+checkpoint_name = "EDSR_S2_PS_x4_16.ckpt"
+checkpoint_new_name = "EDSR_S2_PS_x4_16_v3"
 checkpoint_path = Path(checkpoint_dir) / checkpoint_name
 
 # Download checkpoint from wandb:
@@ -39,20 +41,20 @@ checkpoint_path = Path(checkpoint_dir) / checkpoint_name
 
 
 # Choose model
-model_class = SRCNN
-model_params = {
-    "num_channels" : 4,
-    "scale_factor" : 4,
-    "n_feats" : 128,
-}
-
-# model_class = EDSR
+# model_class = SRCNN
 # model_params = {
-#     "n_resblocks":64,
-#     "n_feats":128,
-#     "scale":4,
-#     "kernel_size":3,
+#     "num_channels" : 4,
+#     "scale_factor" : 4,
+#     "n_feats" : 128,
 # }
+
+model_class = EDSR
+model_params = {
+    "n_resblocks":64,
+    "n_feats":128,
+    "scale":4,
+    "kernel_size":3,
+}
 
 # model_class = SwinIR
 # model_params = {
@@ -98,9 +100,9 @@ lightning_module = GeoSR.load_from_checkpoint(
     # loss_function=nn.MSELoss(),  # or nn.L1Loss() 
     loss_function=DoubleLoss(
         loss1=nn.L1Loss(),
-        loss2=SCC(high_pass_filter=torch.tensor([[-1, -1, -1], [-1, 8, -1], [-1, -1, -1]], device = "cuda"), window_size=8),
+        loss2="SCC",
         f1 = None,
-        f2 = lambda x: 1 - x, 
+        f2 = oneminusx, 
         merge_function= torch.mul
     ),
     )
